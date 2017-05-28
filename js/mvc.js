@@ -14,7 +14,9 @@ $(function(){
       model.data.countersOriginal = datum.counters;
       model.data.counterIndex = 0;
       model.data.counterChangedAt = Date.now();
-      model.data.pages = datum.pages.map(babel.convert);
+      model.data.pages = datum.pagesAndNumbers.map(function(currentPageAndNumber, index, pages){
+        return babel.convert(currentPageAndNumber[0], currentPageAndNumber[1])
+      });
       model.data.pageIndex = 0;
       model.data.pageChangedAt = Date.now();
     },
@@ -40,22 +42,26 @@ $(function(){
     page: function(){
       return model.data.pages[model.data.pageIndex]
     },
+    spans: function(){
+      return $(controller.page().replace(/<br>/g,''))
+    },
     initialPage: function(){
       return model.data.pages[0]
     },
     init: function(datum, babel, actions){
-      model.init(datum, babel);
-      view.init(actions);
-      // $(document).on("keypress", function(){
-      //   if (controller.start) {
-      //     console.log("stop updates");
-      //     clearInterval(controller.start);
-      //   } else {
-      //     console.log("start updates");
+
+      $("#page").html(Babel().convert("", ""));
+
+      $(document).on("keypress", function(){
+        if (!controller.initialized) {
+          controller.initialized = true;
+          model.init(datum, babel);
+          view.init(actions);
           controller.start = setInterval(controller.update, 1000);
-      //   }
-      // })
+        }
+      })
     },
+    initialized: false,
     start: null,
     update: function() {
       var dateNow = Date.now();
@@ -82,38 +88,39 @@ $(function(){
     },
     actions: null,
     renderPage: function(){
-      var page = controller.page();
-      var spans = this.page.find('span');
-
       // RENDER
-      this.page.html( page );
+      var action = function(currentSpans,renderedSpans,index){
+        console.log("start action");
+        var filteredCurrentSpans = currentSpans.filter(function () {
+          return $(this).data("d") == index;
+        });
+        var filteredRenderedSpans = renderedSpans.filter(function () {
+          return $(this).data("d") == index;
+        });
 
-      var lastDelayArray = Array(50).fill("*"); //Math.max(...this.page.find('span').map(function(i,e){return $(e).data("delay")}));
-
-      // view.actions.start(function(times, spans, index){
-      //   var filteredSpans = spans.filter(function () {
-      //     return $(this).data("delay") == index;
-      //   });
-
-      //   // console.log(spans)
-
-      //   filteredSpans.each(function(i,t){
-      //     var index = $(spans).index(this);
-      //     console.log(index);
-      //     $(this).replaceWith($(controller.page()).find('span')[index]);
-      //   });
-      // }, lastDelayArray, spans);
-
-      
-
-
+        filteredCurrentSpans.each(function(index, currentSpan){
+          $(filteredRenderedSpans[index]).replaceWith($(currentSpan));
+        });
+      }
+      var currentSpans = controller.spans();
+      var renderedSpans = this.page.find('span');
 
       // COLOR
-      view.actions.start(function(times, spans, index){
+      var lastAction = function(a, spans, index){
         spans.filter(function () {
-          return $(this).data("delay") == index;
-        }).addClass("active");
-      }, lastDelayArray, this.page.find('span'));
+          return $(this).data("d") == index;
+        }).addClass("a");
+      };
+
+      var startLastAction = function(){
+        console.log("start last action");
+        view.actions.start(lastAction, [], $("#page").find('span'), 50, function(){});
+      }
+      
+      view.actions.start(action, currentSpans, renderedSpans, 47, startLastAction);
+
+
+
     },
     renderCounter: function(){
       var counter = $(controller.counter());
@@ -122,9 +129,9 @@ $(function(){
 
       // RENDER AND COLOR
       view.actions.start(function(counter, oldCounter, index){
-        $(oldCounter[index]).replaceWith($(counter[index]).addClass("active"));
+        $(oldCounter[index]).replaceWith($(counter[index]).addClass("a"));
         // $(counter[index]).addClass("active");
-      }, counter, oldCounter);
+      }, counter, oldCounter, counter.length, function(){});
 
     },
     render: function(){

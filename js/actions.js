@@ -1,9 +1,14 @@
 var Actions = (function(){
 
-  var doAction = function(action, a, b, i, callback) {
-    return function(){
-      action(a,b,i);
-      callback();
+  var startRecursiveAction = function(action, a, b, m, lastCallback) {
+    recursiveActionWithTimeout(action, a, b, 0, m, lastCallback);
+  }
+
+  var recursiveActionWithTimeout = function(action, a, b, i, m, lastCallback) {
+    if (i == m) {
+      lastCallback()
+    } else {
+      actionWithTimeout(action, a, b, i, generateRecursiveActionWithTimeout(action, a, b, i, m, lastCallback))
     }
   }
 
@@ -11,20 +16,19 @@ var Actions = (function(){
     setTimeout(doAction(action, a, b, i, callback), 50);
   }
 
-  var generateRecursiveActionWithTimeout = function(action, a, b, i) {
+  var doAction = function(action, a, b, i, callback) {
     return function(){
-      recursiveActionWithTimeout(action, a, b, i + 1)
+      action(a,b,i);
+      callback();
     }
   }
 
-  var recursiveActionWithTimeout = function(action, a, b, i) {
-    if (a[i] === undefined) {return}
-    actionWithTimeout(action, a, b, i, generateRecursiveActionWithTimeout(action, a, b, i))
+  var generateRecursiveActionWithTimeout = function(action, a, b, i, m, lastCallback) {
+    return function(){
+      recursiveActionWithTimeout(action, a, b, i + 1, m, lastCallback)
+    }
   }
 
-  var startRecursiveAction = function(action, a, b) {
-    recursiveActionWithTimeout(action, a, b, 0);
-  }
 
 
   return {

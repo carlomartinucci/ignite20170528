@@ -12,9 +12,10 @@ var Babel = (function(options){
     return string.split('').map(charToBabel).join('')
   }
 
-  function convert(page) {
+  function convert(page, indexString) {
     var lines = page.split("\n").filter(function(line){return line.length > 0});
     var filledLines = fill(lines, settings.lines, [""]);
+    filledLines[0] = "" + indexString + filledLines[0].slice(indexString.length)
     var babelLines = filledLines.map(lineToBabel);
     return babelLines.join("<br>")
   }
@@ -42,19 +43,19 @@ var Babel = (function(options){
 
   function lineToBabel(line, offset) {
     var filledLine = fill(line, settings.rows, "*");
-    return filledLine.split('').map(charToBabelWithOffset(offset * settings.xOffset)).join('')
+    return filledLine.split('').map(charToBabelWithOffset(parseInt(offset * settings.yOffset))).join('')
   }
   function charToBabelWithOffset(offset) {
     return function(c, index) {
-      return charToBabel(c, index + offset * settings.yOffset)
+      return charToBabel(c, index + parseInt(offset * settings.xOffset))
     }
   }
   function charToBabel(c, index) {
     var normalizedC = c.toLowerCase()
     if (settings.allowedChars.indexOf(normalizedC) === -1) {
-      return '<span class="noise" data-delay="' + index + '">' + randomChar() + '</span>'
+      return '<span class="n" data-d="' + index + '">' + randomChar() + '</span>'
     } else {
-      return '<span class="signal" data-delay="' + index + '">' + normalizedC + '</span>'
+      return '<span class="s" data-d="' + index + '">' + normalizedC + '</span>'
     }
   }
   
@@ -67,7 +68,8 @@ var Babel = (function(options){
 
   return {
     convert: convert,
-    convertString: convertString
+    convertString: convertString,
+    sample: sample
   }
 
 })

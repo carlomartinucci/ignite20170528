@@ -11,15 +11,15 @@ body {
 }
 code {
   display: block;
-  transition: 1s;
+  transition: color 1s;
 }
-.signal, .noise {
+.s, .n {
   color: black;
   transition: color 1s;
 }
-.signal.active {
+.s.a {
   color: red;
 }
-.noise.active {
+.n.a {
   color: grey;
 }
